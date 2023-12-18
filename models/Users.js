@@ -6,12 +6,12 @@ async function register(req, res) {
   let resonse = await client.query(`SELECT * FROM users WHERE username = '${username}' or phone = '${phone}' `)
   if (resonse.rowCount !== 0) {
     res.send({
-      success: false,
+      status: false,
       message: "username and phone already exit",
     });
   }
   else {
-    const hasPasswrod = bcrypt.hashSync(password, 10);
+    const hasPasswrod =  password
     const result = await client.query(`INSERT INTO users (name, username, password, phone) VALUES ('${name}','${username}','${hasPasswrod}','${phone}') RETURNING *`)
     let user = result.rows[0];
     user['rule'] = "user";
@@ -23,10 +23,11 @@ async function register(req, res) {
       token: token,
     }
     res.send({
-      success: true,
+      status: true,
       user: userWithToken,
     });
   }
+  
 }
 async function login(req, res) {
   let { username, password } = req.body;
@@ -38,7 +39,8 @@ async function login(req, res) {
   else {
     let user = result.rows[0];
     user['rule'] = "user";
-    const match = await bcrypt.compare(password, user.password);
+    // const match = await bcrypt.compare(password, user.password);
+    const match = password==user.password?true:false;
     if (match) {
       var token = jwt.sign(user, "shhhhh");
       const userwithTokwn = {
@@ -47,10 +49,10 @@ async function login(req, res) {
         phone:user["phone"],
         token:token,
       }
-      res.send({ success: true, user:userwithTokwn });
+      res.send({ status: true, user:userwithTokwn });
     } 
     else {
-      res.send({ success: false, msg: "Wrong password!" });
+      res.send({ status: false, msg: "Wrong password!" });
     }
   
   }
